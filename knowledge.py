@@ -40,7 +40,6 @@ def _load_keywords(path: str) -> dict[str, dict[str, float]]:
     with open(path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
-    # Collect all words
     all_docs = []
     for name, sec in data['sections'].items():
         words = _extract_words(sec['title'] + '\n\n' + sec['content'])
@@ -93,13 +92,12 @@ def search(query: str, top_k: int = 2, items: list[KnowledgeItem] = [],
         scores.sort(key=lambda x: x[1], reverse=True)
         return [item for item, _ in scores[:top_k]]
     
-    # TF-IDF search
-    query_tfidf = Counter(query_words)
-    total_query = len(query_words)
-    
     results = []
     for name, data in tfidf.items():
         score = sum(data['tfidf'].get(w, 0) for w in query_words)
+        title_stems = set(_extract_words(data['title']))
+        title_bonus = sum(2.0 for w in query_words if w in title_stems)
+        score += title_bonus
         if score > 0:
             results.append((data['content'], score))
     
