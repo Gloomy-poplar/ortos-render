@@ -59,10 +59,8 @@ async def handle_message(message: Message):
         return
     results = search(message.text, top_k=2, items=kb_items, tfidf=kb_tfidf)
     if not results:
-        await message.answer(
-            "К сожалению, у меня нет информации по этому вопросу. "
-            "Позвоните нам: +375 (29) 145-03-03 или напишите на online@ortos.by"
-        )
+        response = await get_grok_response(message.text, [])
+        await message.answer(response)
         return
     response = await get_grok_response(message.text, results)
     await message.answer(response)
