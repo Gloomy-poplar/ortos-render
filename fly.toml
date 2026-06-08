@@ -1,0 +1,21 @@
+app = "ortos-bot"
+primary_region = "fra"
+
+[build]
+[env]
+PYTHON_VERSION = "3.12"
+
+[deploy]
+strategy = "immediate"
+
+[http_service]
+internal_port = 8080
+force_https = true
+auto_start_machines = true
+
+[[services]]
+internal_port = 8080
+protocol = "tcp"
+[[services.ports]]
+handlers = ["http"]
+port = 80
