@@ -7,6 +7,10 @@ import json
 import re
 from collections import Counter
 from pydantic import BaseModel
+from nltk.stem.snowball import SnowballStemmer
+
+
+stemmer = SnowballStemmer('russian')
 
 
 class KnowledgeItem(BaseModel):
@@ -16,9 +20,8 @@ class KnowledgeItem(BaseModel):
 
 
 def _extract_words(text: str) -> list[str]:
-    """Extract meaningful words from Russian text."""
     words = re.findall(r'[а-яё]{3,}', text.lower())
-    return [w for w in words if len(w) >= 3]
+    return [stemmer.stem(w) for w in words if len(w) >= 3]
 
 
 STOPWORDS = {
