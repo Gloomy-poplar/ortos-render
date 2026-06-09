@@ -35,29 +35,32 @@ STOPWORDS = {
 }
 
 
-def _load_keywords(path: str) -> dict[str, dict[str, float]]:
-    """Load and compute TF-IDF for all sections."""
-    with open(path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    
+def _load_keywords(paths: list[str] | str) -> dict[str, dict[str, float]]:
+    """Load and compute TF-IDF for all sections across multiple files."""
+    if isinstance(paths, str):
+        paths = [paths]
     all_docs = []
-    for name, sec in data['sections'].items():
-        words = _extract_words(sec['title'] + '\n\n' + sec['content'])
-        all_docs.append(words)
+    sections_data = []
+    
+    for path in paths:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        for name, sec in data['sections'].items():
+            key = f"{path}:{name}"
+            words = _extract_words(sec['title'] + '\n\n' + sec['content'])
+            all_docs.append(words)
+            sections_data.append((key, sec))
     
     tfidf = {}
     
-    for name, sec in data['sections'].items():
+    for key, sec in sections_data:
         words = _extract_words(sec['title'] + '\n\n' + sec['content'])
-        # Filter out stopwords
         words = [w for w in words if w not in STOPWORDS]
         
-        # TF
         word_counts = Counter(words)
-        total_words = len(words)
+        total_words = len(words) or 1
         
-        # IDF
-        tfidf[name] = {
+        tfidf[key] = {
             'title': sec['title'],
             'content': sec['content'],
             'tfidf': {w: count / total_words * (1 + sum(1 for doc in all_docs if w in doc))
@@ -67,14 +70,17 @@ def _load_keywords(path: str) -> dict[str, dict[str, float]]:
     return tfidf
 
 
-def load_knowledge_base(path: str) -> list[KnowledgeItem]:
-    """Load sections from knowledge_base.json."""
-    with open(path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    return [
-        KnowledgeItem(id=name, title=sec['title'], content=sec['content'])
-        for name, sec in data['sections'].items()
-    ]
+def load_knowledge_base(paths: list[str] | str) -> list[KnowledgeItem]:
+    """Load sections from multiple knowledge base files."""
+    if isinstance(paths, str):
+        paths = [paths]
+    items = []
+    for path in paths:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        for name, sec in data['sections'].items():
+            items.append(KnowledgeItem(id=f"{path}:{name}", title=sec['title'], content=sec['content']))
+    return items
 
 
 def search(query: str, top_k: int = 2, items: list[KnowledgeItem] = [], 
@@ -84,13 +90,7 @@ def search(query: str, top_k: int = 2, items: list[KnowledgeItem] = [],
     query_words -= STOPWORDS
     
     if not tfidf:
-        # Fallback to simple keyword overlap
-        all_items = load_knowledge_base(items[0].id if items else 'knowledge_base.json')
-        scores = [(item, len(query_words & set(_extract_words(item.content)))) 
-                  for item in all_items]
-        scores = [(item, score) for item, score in scores if score > 0]
-        scores.sort(key=lambda x: x[1], reverse=True)
-        return [item for item, _ in scores[:top_k]]
+        return []
     
     results = []
     for name, data in tfidf.items():
@@ -114,8 +114,10 @@ def search(query: str, top_k: int = 2, items: list[KnowledgeItem] = [],
     return matched_items
 
 
-def reload_knowledge(path: str) -> tuple[list[KnowledgeItem], dict[str, dict[str, float]]]:
-    """Reload and recompute keywords."""
-    items = load_knowledge_base(path)
-    tfidf = _load_keywords(path)
+def reload_knowledge(paths: list[str] | str) -> tuple[list[KnowledgeItem], dict[str, dict[str, float]]]:
+    """Reload and recompute keywords from one or multiple files."""
+    if isinstance(paths, str):
+        paths = [paths]
+    items = load_knowledge_base(paths)
+    tfidf = _load_keywords(paths)
     return items, tfidf
