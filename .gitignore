@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .DS_Store
+all_dialogs.csv
+*.pyc
+test_output.txt
