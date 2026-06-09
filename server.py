@@ -1,10 +1,8 @@
-"""Entry point for ORTOS Telegram Bot."""
+"""Entry point for ORTOS Telegram Bot on Render."""
 
-import os
-import threading
+import os, threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from dotenv import load_dotenv
-from bot import start_bot
 
 load_dotenv()
 
@@ -26,12 +24,15 @@ class HealthHandler(BaseHTTPRequestHandler):
         pass
 
 
-def run_health_server():
-    server = HTTPServer(('0.0.0.0', PORT), HealthHandler)
-    server.serve_forever()
+def run_bot():
+    from bot import start_bot
+    start_bot(TELEGRAM_TOKEN)
 
 
 if __name__ == '__main__':
-    threading.Thread(target=run_health_server, daemon=True).start()
-    print(f"Health server started on port {PORT}")
-    start_bot(TELEGRAM_TOKEN)
+    t = threading.Thread(target=run_bot, daemon=True)
+    t.start()
+
+    server = HTTPServer(('0.0.0.0', PORT), HealthHandler)
+    print(f"Health server listening on port {PORT}")
+    server.serve_forever()
