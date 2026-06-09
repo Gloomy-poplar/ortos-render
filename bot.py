@@ -16,8 +16,6 @@ KB_PATHS = os.getenv('KB_PATH', 'knowledge_base.json,knowledge_base_insoles.json
 from knowledge import reload_knowledge, search
 kb_items, kb_tfidf = reload_knowledge(KB_PATHS)
 
-OPERATOR_CONTACTS = "Позвоните: +375 (29) 145-03-03 или +375 (17) 355-77-03. Напишите в Telegram, Viber, WhatsApp или на email: online@ortos.by"
-
 OPERATOR_TRIGGERS = [
     re.compile(r'отмен(ит|и|ю|я|иться|ять)', re.I),
     re.compile(r'(удал|отписк|откаж|отзов|отпиш)(ит|и|ю|я|ись)', re.I),
@@ -38,8 +36,8 @@ async def get_grok_response(question: str, context_items) -> str:
         "Ты — помощник салона ортопедических стелек ORTOS. "
         "Отвечай только на русском языке. "
         "Если вопрос требует действий оператора (отмена заказа, продление брони, "
-        "отписка от рассылки, жалоба, претензия, согласование доставки) — дай контакты: "
-        "+375 (29) 145-03-03, online@ortos.by. "
+        "отписка от рассылки, жалоба, претензия, согласование доставки) — "
+        "скажи: 'Переход на оператор'. Никаких контактов не давай."
         "Если вопрос не связан с продукцией ORTOS — вежливо скажи, что не можешь помочь."
     )
     
@@ -78,9 +76,7 @@ async def handle_message(message: Message):
         await handle_start(message)
         return
     if need_operator(text):
-        await message.answer(
-            f"Для решения этого вопроса свяжитесь с оператором.\n\n{OPERATOR_CONTACTS}"
-        )
+        await message.answer("Переход на оператор")
         return
     results = search(text, top_k=2, items=kb_items, tfidf=kb_tfidf)
     if not results:
