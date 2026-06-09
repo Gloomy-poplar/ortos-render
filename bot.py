@@ -11,10 +11,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
-KB_PATHS = os.getenv('KB_PATH', 'knowledge_base.json,knowledge_base_insoles.json').split(',')
-
 from knowledge import reload_knowledge, search
-kb_items, kb_tfidf = reload_knowledge(KB_PATHS)
+kb_items, kb_tfidf = reload_knowledge(['knowledge_base.json', 'knowledge_base_insoles.json'])
 
 OPERATOR_TRIGGERS = [
     re.compile(r'отмен(ит|и|ю|я|иться|ять)', re.I),
